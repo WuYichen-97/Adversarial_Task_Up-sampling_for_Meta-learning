@@ -2,7 +2,7 @@
 NeurIPS'22: [Adversarial Task Up-sampling for Meta-learning](https://openreview.net/pdf?id=pFqgUJxXXz) (Official Pytorch implementation).  
 
 ### Data
-Related datasets are in [Google Drive](https://drive.google.com/drive/folders/1MG881Zjh1vaWd3dizhYH_l5APXEiKZrx?usp=sharing)
+Related datasets are in [Google Drive](https://drive.google.com/drive/folders/1UweivDN4WTwC-eeomQnnIhl_DC8vhLxU?usp=sharing)
 
 ## Setups
 The requiring environment is as bellow:  
