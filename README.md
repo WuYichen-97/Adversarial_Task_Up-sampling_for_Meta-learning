@@ -1,4 +1,4 @@
-# Adversarial_Task_Up-sampling_for_Meta-learning
+# Adversarial Task Up-sampling for Meta-learning
 NeurIPS'22: [Adversarial Task Up-sampling for Meta-learning](https://openreview.net/pdf?id=pFqgUJxXXz) (Official Pytorch implementation for noisy labels).  
 
 ### Data
