@@ -25,4 +25,4 @@ If you find this repository useful in your research, please cite the following p
 ### Acknowledgements
 We thank the Pytorch implementation of Metamix(https://github.com/huaxiuyao/MetaMix).
 
-Contact: Yichen Wu (wuyichen.am97@gmail.com);
+Contact: Yichen Wu (wuyichen.am97@gmail.com).
