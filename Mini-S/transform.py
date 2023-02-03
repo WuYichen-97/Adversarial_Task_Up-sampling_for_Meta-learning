@@ -1,3 +1,10 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:8e3adcec2b2298488e1b04c4640b7aa23eb64785cbfb35f72a6a61a84ec0b971
-size 218
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Mar 24 20:36:12 2022
+
+@author: coltonwu
+"""
+
+import torch
+state_dict = torch.load('./pcn27000')
+torch.save(state_dict,'pcn27000',_use_new_zipfile_serialization=False)

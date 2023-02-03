@@ -1,3 +1,107 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:f2356be25edb6786fbfa31e687cf4c87f2d1b9317fdf50f84c89969cc743ec2d
-size 4148
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Apr 14 15:36:24 2021
+
+@author: coltonwu
+"""
+
+import torch
+import torch.nn as nn
+import random
+
+# Adapted from https://github.com/gpeyre/SinkhornAutoDiff
+class SinkhornDistance(nn.Module):
+    r"""
+    Given two empirical measures each with :math:`P_1` locations
+    :math:`x\in\mathbb{R}^{D_1}` and :math:`P_2` locations :math:`y\in\mathbb{R}^{D_2}`,
+    outputs an approximation of the regularized OT cost for point clouds.
+    Args:
+        eps (float): regularization coefficient
+        max_iter (int): maximum number of Sinkhorn iterations
+        reduction (string, optional): Specifies the reduction to apply to the output:
+            'none' | 'mean' | 'sum'. 'none': no reduction will be applied,
+            'mean': the sum of the output will be divided by the number of
+            elements in the output, 'sum': the output will be summed. Default: 'none'
+    Shape:
+        - Input: :math:`(N, P_1, D_1)`, :math:`(N, P_2, D_2)`
+        - Output: :math:`(N)` or :math:`()`, depending on `reduction`
+    """
+    def __init__(self, eps, max_iter, reduction='none'):
+        super(SinkhornDistance, self).__init__()
+        self.eps = eps
+        self.max_iter = max_iter
+        self.reduction = reduction
+
+    def forward(self, x, y):
+        # The Sinkhorn algorithm takes as input three variables :
+        C = self._cost_matrix(x, y)  # Wasserstein cost function
+        x_points = x.shape[-2]
+        y_points = y.shape[-2]
+        if x.dim() == 2:
+            batch_size = 1
+        else:
+            batch_size = x.shape[0]
+
+        # both marginals are fixed with equal weights
+        mu = torch.empty(batch_size, x_points, dtype=torch.float,
+                         requires_grad=False).fill_(1.0 / x_points).squeeze(0).cuda()
+        nu = torch.empty(batch_size, y_points, dtype=torch.float,
+                         requires_grad=False).fill_(1.0 / y_points).squeeze(0).cuda()
+
+        u = torch.zeros_like(mu).cuda()
+        v = torch.zeros_like(nu).cuda()
+        # To check if algorithm terminates because of threshold
+        # or max iterations reached
+        actual_nits = 0
+        # Stopping criterion
+        thresh = 1e-1
+
+        # Sinkhorn iterations
+        for i in range(self.max_iter):
+            u1 = u  # useful to check the update
+            u = self.eps * (torch.log(mu+1e-8) - torch.logsumexp(self.M(C, u, v), dim=-1)).cuda() + u.cuda()
+            v = self.eps * (torch.log(nu+1e-8) - torch.logsumexp(self.M(C, u, v).transpose(-2, -1), dim=-1)).cuda() + v.cuda()
+            err = (u - u1).abs().sum(-1).mean()
+
+            actual_nits += 1
+            if err.item() < thresh:
+                break
+
+        U, V = u, v
+        # Transport plan pi = diag(a)*K*diag(b)
+        pi = torch.exp(self.M(C, U, V))
+        # Sinkhorn distance
+        cost = torch.sum(pi * C, dim=(-2, -1))
+
+        if self.reduction == 'mean':
+            cost = cost.mean()
+        elif self.reduction == 'sum':
+            cost = cost.sum()
+        return cost, pi.squeeze(), C.squeeze()
+
+    def M(self, C, u, v):
+        "Modified cost for logarithmic updates"
+        "$M_{ij} = (-c_{ij} + u_i + v_j) / \epsilon$"
+        return (-C + u.unsqueeze(-1) + v.unsqueeze(-2)) / self.eps
+    
+    # @staticmethod
+    def _cost_matrix(self, x, y, p=2):
+        "Returns the matrix of $|x_i-y_j|^p$."
+        x_col = x.unsqueeze(-2)
+        # weights = self.y_axis_weights(10,x_col.shape[-1])
+        # print('x_col',x_col.shape)
+        y_lin = y.unsqueeze(-3)
+        C = torch.sum(( (torch.abs(x_col - y_lin)) ** p) , -1)
+        return C
+
+    @staticmethod
+    def ave(u, u1, tau):
+        "Barycenter subroutine, used by kinetic acceleration through extrapolation."
+        return tau * u + (1 - tau) * u1
+
+if __name__ == "__main__":
+    sinkhorn = SinkhornDistance(eps=0.01, max_iter=500, reduction=None)
+    pred = torch.rand(1,4,5*32*42*42).cuda()
+    gt_data = torch.rand(1,4,5*32*42*42).cuda()
+    emd_loss,_,_ = sinkhorn(pred, gt_data)  
+    print('emd_loss',emd_loss)
