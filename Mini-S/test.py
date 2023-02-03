@@ -55,7 +55,7 @@ torch.backends.cudnn.benchmark = True
 random.seed(1)
 np.random.seed(2)
 
-exp_string = f'MetaMix.data_{args.datasource}.cls_{args.num_classes}.mbs_{args.meta_batch_size}.ubs_{args.update_batch_size}.metalr_{args.meta_lr}.innerlr_{args.update_lr}'
+exp_string = f'ATU.data_{args.datasource}.cls_{args.num_classes}.mbs_{args.meta_batch_size}.ubs_{args.update_batch_size}.metalr_{args.meta_lr}.innerlr_{args.update_lr}'
 if args.num_filters != 64:
     exp_string += '.hidden' + str(args.num_filters)
 if args.mix:
