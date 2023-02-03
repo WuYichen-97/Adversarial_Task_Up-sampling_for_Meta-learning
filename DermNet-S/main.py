@@ -60,7 +60,7 @@ torch.backends.cudnn.benchmark = True
 random.seed(1)
 np.random.seed(2)
 
-exp_string = 'ProtoNet_Cross' + '.data_' + str(args.datasource) + '.cls_' + str(args.num_classes) + '.mbs_' + str(
+exp_string = 'ATU' + '.data_' + str(args.datasource) + '.cls_' + str(args.num_classes) + '.mbs_' + str(
     args.meta_batch_size) + '.ubs_' + str(
     args.update_batch_size) + '.metalr' + str(args.meta_lr)
 
